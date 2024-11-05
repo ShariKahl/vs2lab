@@ -7,7 +7,7 @@ import threading
 import unittest
 
 import clientserver
-from context import lab_logging
+from lab1.context import lab_logging
 
 lab_logging.setup(stream_level=logging.INFO)
 

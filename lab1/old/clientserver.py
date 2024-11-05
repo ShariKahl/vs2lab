@@ -5,8 +5,8 @@ Client and server using classes
 import logging
 import socket
 
-import const_cs
-from context import lab_logging
+import lab1.const_cs as const_cs
+from lab1.context import lab_logging
 
 lab_logging.setup(stream_level=logging.INFO)  # init loging channels for the lab
 
