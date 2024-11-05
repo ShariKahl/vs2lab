@@ -8,7 +8,7 @@ from json_helper import deserialize_phonebook_entries
 
 class TcpClient:
     """ The client """
-    logger = logging.getLogger("vs2lab.a1_layers.clientserver.TcpClient")
+    logger = logging.getLogger("vs2lab.lab1.TcpClient")
 
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

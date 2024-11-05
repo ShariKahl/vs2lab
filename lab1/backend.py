@@ -3,7 +3,7 @@ import logging
 from phone_book_controller import PhoneBookController
 import json
 
-logger = logging.getLogger("vs2lab.lab1.backend.Backend")
+logger = logging.getLogger("vs2lab.lab1.Backend")
 
 class Backend:
     _phoneBookController = PhoneBookController()

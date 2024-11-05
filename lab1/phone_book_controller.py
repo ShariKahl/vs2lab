@@ -5,14 +5,20 @@ import faker
 fake = faker.Faker()
 
 class PhoneBookController:
-    _entries: List[PhoneBookEntry] = [
-        {
-            "name": fake.name(),
-            "phone_number": fake.phone_number(),
-            "city": fake.city()
-        }
-        for _ in range(500)
-    ]
+    def __init__(self):
+        self._entries: List[PhoneBookEntry] = [
+            {
+                "name": fake.name(),
+                "phone_number": fake.phone_number(),
+                "city": fake.city()
+            }
+            for _ in range(499)
+        ]
+        self._entries.append({
+            "name": "Alice",
+            "phone_number": "111111111",
+            "city": "City1"
+        })
 
     def addEntry(self, entry):
         self._entries.append(entry)
