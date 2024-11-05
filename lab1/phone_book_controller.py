@@ -1,18 +1,17 @@
 from phone_book_entry import PhoneBookEntry
 from typing import List
+import faker
+
+fake = faker.Faker()
 
 class PhoneBookController:
     _entries: List[PhoneBookEntry] = [
         {
-            "name": "John Doe",
-            "phone_number": "1234567890",
-            "city": "New York"
-        },
-        {
-            "name": "Jane Doe",
-            "phone_number": "0987654321",
-            "city": "Los Angeles"
+            "name": fake.name(),
+            "phone_number": fake.phone_number(),
+            "city": fake.city()
         }
+        for _ in range(500)
     ]
 
     def addEntry(self, entry):

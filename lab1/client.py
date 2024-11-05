@@ -32,4 +32,6 @@ while True:
     for entry in data:
             print(f"{entry.name}: {entry.phone_number}, {entry.city}")
 
+    print(f"Total entries: {len(data)}")
+
 client.close()

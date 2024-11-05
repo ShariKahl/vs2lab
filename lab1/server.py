@@ -7,7 +7,7 @@ from context import lab_logging
 lab_logging.setup(stream_level=logging.DEBUG)
 
 class Server:
-    _logger = logging.getLogger("vs2lab.lab1.clientserver.Server")
+    _logger = logging.getLogger("vs2lab.lab1.Server")
     _serving = True
     _backend = Backend()
 
