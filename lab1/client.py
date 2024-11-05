@@ -4,7 +4,7 @@ from context import lab_logging
 from phone_book_entry import PhoneBookEntry
 from typing import List
 
-lab_logging.setup(stream_level=logging.INFO)
+lab_logging.setup(stream_level=logging.DEBUG)
 
 
 while True:
@@ -14,7 +14,7 @@ while True:
 
     data: List[PhoneBookEntry] = []
 
-    if command == "exit":
+    if command == "EXIT":
         break
     elif command == "GET":
         argument = input("Enter Search Query: ")
@@ -23,7 +23,7 @@ while True:
     elif command == "GET_ALL":
         data = client.sendCommand("GET_ALL")
     else:
-        print("Unknown command. Available Commands are: GET, GET_ALL")
+        print("Unknown command. Available Commands are: GET, GET_ALL, EXIT")
 
     if(len(data) == 0):
         print("No entries found.")
