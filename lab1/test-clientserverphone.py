@@ -5,8 +5,9 @@ Simple client server unit test
 import logging
 import threading
 import unittest
+import re
 
-import clientserver
+import clientserverphone
 from context import lab_logging
 
 lab_logging.setup(stream_level=logging.INFO)
@@ -14,8 +15,10 @@ lab_logging.setup(stream_level=logging.INFO)
 
 class TestEchoService(unittest.TestCase):
     """The test"""
-    _server = clientserver.Server()  # create single server in class variable
+    _server = clientserverphone.Server()  # create single server in class variable
     _server_thread = threading.Thread(target=_server.serve)  # define thread for running server
+
+    patternGETALL = r'^GETALL:\s.*$'
 
     @classmethod
     def setUpClass(cls):
@@ -23,12 +26,22 @@ class TestEchoService(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.client = clientserver.Client()  # create new client for each test
+        self.client = clientserverphone.Client()  # create new client for each test
 
-    def test_srv_get(self):  # each test_* function is a test
+    def test_srv_getEntry(self):  # each test_* function is a test
         """Test simple call"""
-        msg = self.client.call("Hello VS2Lab")
-        self.assertEqual(msg, 'Hello VS2Lab*')
+        msg = self.client.get("Alice")
+        self.assertEqual(msg, 'GET: Alice: 987-654-3210')
+
+    def test_srv_getAll(self):  # each test_* function is a test
+        """Test simple call"""
+        msg = self.client.getAll()
+        self.assertNotEqual(re.match(TestEchoService.patternGETALL, msg), None)
+    
+    def test_srv_getEntryNotFound(self):  # each test_* function is a test
+        """Test simple call"""
+        msg = self.client.get("ce")
+        self.assertEqual(msg, 'Contact not found')
 
     def tearDown(self):
         self.client.close()  # terminate client after each test
