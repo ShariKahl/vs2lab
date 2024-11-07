@@ -38,8 +38,14 @@ class Backend:
             raise ValueError("Malformed string")
         else:
             # Convert the result to JSON bytes
-            return bytes(json.dumps(self._phoneBookController.getEntry(search_query)), "utf-8")
+            entries = self._phoneBookController.getEntry(search_query)
+            json_data = json.dumps(entries)
+
+            return bytes(json_data, "utf-8")
 
     def _getAll(self):
         # Convert all entries to JSON bytes
-        return bytes(json.dumps(self._phoneBookController.getAllEntries()), "utf-8")
+        entries = self._phoneBookController.getAllEntries()
+        json_data = json.dumps(entries)
+
+        return bytes(json_data, "utf-8")
