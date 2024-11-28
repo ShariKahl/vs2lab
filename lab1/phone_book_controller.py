@@ -15,7 +15,7 @@ class PhoneBookController:
             for _ in range(499)
         ]
         self._entries.append({
-            "name": "Alice",
+            "name": "Älice",
             "phone_number": "111111111",
             "city": "City1"
         })
