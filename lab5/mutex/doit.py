@@ -37,7 +37,12 @@ def create_and_run(num_bits, peer_name, peer_type, proc_class, enter_bar, run_ba
     proc = proc_class(chan)
     enter_bar.wait()  # wait for all peers to join the channel
     proc.init(peer_name, peer_type)  # do some bootstrapping
+
+    logger.info(f"Process {peer_name} initialized as {peer_type}.")
     run_bar.wait()  # wait for all nodes to finish
+
+    # Füge zufällige Verzögerungen vor dem Start hinzu, um realistischere Szenarien zu simulieren
+    time.sleep(random.uniform(0.5, 2.0))
     proc.run()  # start operating
 
 
