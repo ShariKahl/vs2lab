@@ -1,8 +1,9 @@
 import logging
 import random
 import time
+from datetime import datetime
 
-from constMutex import ENTER, RELEASE, ALLOW
+from constMutex import ENTER, RELEASE, ALLOW, ACTIVE
 
 
 class Process:
@@ -40,22 +41,24 @@ class Process:
         self.queue = []  # The request queue list
         self.clock = 0  # The current logical clock
         self.logger = logging.getLogger("vs2lab.lab5.mutex.process.Process")
+        self.peer_name = 'unassigned'
+        self.peer_type = 'unassigned'
+        self.last_seen = {}  # Zuletzt gesehene Zeitstempel pro Prozess
+        self.timeout_limit = 10  # Timeout in Sekunden, um Prozess als ausgefallen zu betrachten
 
     def __mapid(self, id='-1'):
         # resolve channel member address to a human friendly identifier
         if id == '-1':
             id = self.process_id
-        return 'Proc_' + chr(65 + self.all_processes.index(id))
+        return 'Proc-' + str(id)
 
     def __cleanup_queue(self):
         if len(self.queue) > 0:
             #self.queue.sort(key = lambda tup: tup[0])
             self.queue.sort()
             # There should never be old ALLOW messages at the head of the queue
-            while self.queue[0][2] == ALLOW:
-                del (self.queue[0])
-                if len(self.queue) == 0:
-                    break
+            while len(self.queue) > 0 and self.queue[0][2] == ALLOW:
+                del self.queue[0]
 
     def __request_to_enter(self):
         self.clock = self.clock + 1  # Increment clock value
@@ -91,9 +94,13 @@ class Process:
 
     def __receive(self):
          # Pick up any message
-        _receive = self.channel.receive_from(self.other_processes, 10) 
+        _receive = self.channel.receive_from(self.other_processes, 3) 
+        current_time = datetime.now()
+
         if _receive:
             msg = _receive[1]
+            sender = msg[1]
+            self.last_seen[sender] = current_time  # Aktualisiere Zeitstempel
 
             self.clock = max(self.clock, msg[0])  # Adjust clock value...
             self.clock = self.clock + 1  # ...and increment
@@ -102,24 +109,42 @@ class Process:
                 self.__mapid(),
                 "ENTER" if msg[2] == ENTER
                 else "ALLOW" if msg[2] == ALLOW
-                else "RELEASE", self.__mapid(msg[1])))
+                else "RELEASE", self.__mapid(sender)))
 
             if msg[2] == ENTER:
                 self.queue.append(msg)  # Append an ENTER request
                 # and unconditionally allow (don't want to access CS oneself)
-                self.__allow_to_enter(msg[1])
+                self.__allow_to_enter(sender)
             elif msg[2] == ALLOW:
                 self.queue.append(msg)  # Append an ALLOW
             elif msg[2] == RELEASE:
                 # assure release requester indeed has access (his ENTER is first in queue)
-                assert self.queue[0][1] == msg[1] and self.queue[0][2] == ENTER, 'State error: inconsistent remote RELEASE'
-                del (self.queue[0])  # Just remove first message
+                assert self.queue[0][1] == sender and self.queue[0][2] == ENTER, 'State error: inconsistent remote RELEASE'
+                del self.queue[0]  # Just remove first message
 
             self.__cleanup_queue()  # Finally sort and cleanup the queue
         else:        
-            self.logger.warning("{} timed out on RECEIVE.".format(self.__mapid()))
+            self.logger.info("{} timed out on RECEIVE. Local queue: {}".
+                             format(self.__mapid(),
+                                    list(map(lambda msg: (
+                                        'Clock ' + str(msg[0]),
+                                        self.__mapid(msg[1]),
+                                        msg[2]), self.queue))))
+            
+        self.__check_for_failures()
 
-    def init(self):
+    def __check_for_failures(self):
+        """Prüfe, ob andere Prozesse als ausgefallen betrachtet werden sollten."""
+        current_time = datetime.now()
+        for proc in self.other_processes[:]:
+            if proc not in self.last_seen:
+                self.last_seen[proc] = current_time  # Initialer Zeitstempel
+            elif (current_time - self.last_seen[proc]).total_seconds() > self.timeout_limit:
+                self.logger.warning(f"Process {self.__mapid(proc)} is considered crashed.")
+                self.other_processes.remove(proc)  # Entferne den ausgefallenen Prozess
+                self.all_processes.remove(proc)  # Entferne aus der Gesamtübersicht
+
+    def init(self, peer_name, peer_type):
         self.channel.bind(self.process_id)
 
         self.all_processes = list(self.channel.subgroup('proc'))
@@ -129,14 +154,18 @@ class Process:
         self.other_processes = list(self.channel.subgroup('proc'))
         self.other_processes.remove(self.process_id)
 
+        self.peer_name = peer_name
+        self.peer_type = peer_type
+
         self.logger.info("Member {} joined channel as {}."
-                         .format(self.process_id, self.__mapid()))
+                         .format(peer_name, self.__mapid()))
 
     def run(self):
         while True:
             # Enter the critical section if there are more than one process left
             # and random is true
             if len(self.all_processes) > 1 and \
+                    self.peer_type == ACTIVE and \
                     random.choice([True, False]):
                 self.logger.debug("{} wants to ENTER CS at CLOCK {}."
                     .format(self.__mapid(), self.clock))
